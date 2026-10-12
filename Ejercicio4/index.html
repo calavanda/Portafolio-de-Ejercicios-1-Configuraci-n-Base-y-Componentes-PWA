@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 4: Cache API y Estrategia Cache-First</title>
+  <meta name="description" content="Demostración interactiva de la Cache API y estrategia Cache-First durante el evento install del Service Worker.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="images/icon-192.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- HEADER HERO BANNER -->
+    <header class="header">
+      <div class="hero-banner">
+        <img src="images/app_shell_banner.jpg" alt="Cache API Visual Architecture" id="appBannerImage">
+        <div class="hero-overlay">
+          <span class="badge-tag">⚡ Service Worker & Cache API</span>
+          <h1 class="hero-title">Ejercicio 4: Estrategia de Caché Estática (Cache-First)</h1>
+          <p class="hero-subtitle">
+            Instalación del Service Worker, precaché completo de los recursos estáticos del <strong>App Shell</strong> con la Cache API y manejo del evento <code>fetch</code> con estrategia <strong>Cache-First</strong>.
+          </p>
+        </div>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div class="status-grid">
+        <div class="status-card">
+          <div class="status-icon">⚙️</div>
+          <div class="status-info">
+            <h4>Service Worker</h4>
+            <div class="status-value" id="swStatusDisplay">
+              <span class="dot inactive" id="swDot"></span>
+              <span id="swStatusText">Verificando...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon">🌐</div>
+          <div class="status-info">
+            <h4>Estado de Red</h4>
+            <div class="status-value" id="netStatusDisplay">
+              <span class="dot active" id="netDot"></span>
+              <span id="netStatusText">Online</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon">📦</div>
+          <div class="status-info">
+            <h4>Recursos en Caché (`app-shell-v1`)</h4>
+            <div class="status-value" id="cacheCountDisplay">
+              <span id="cacheCountText">0 archivos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD MAIN GRID -->
+    <main class="dashboard-grid">
+
+      <!-- CARD 1: CONTROLES DEL SERVICE WORKER & CACHÉ -->
+      <section class="card col-6" id="sec-sw-controls">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            1. Control del Service Worker
+          </h2>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+          Registra el Service Worker para disparar el evento <code>install</code> y precachar el App Shell en la Cache API.
+        </p>
+        <div class="btn-group">
+          <button id="btnRegisterSW" class="btn btn-primary">
+            <span>🚀 Registrar Service Worker</span>
+          </button>
+          <button id="btnUnregisterSW" class="btn btn-danger">
+            <span>🗑️ Desinstalar SW</span>
+          </button>
+          <button id="btnClearCache" class="btn btn-secondary">
+            <span>🧹 Vaciar Caché API</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- CARD 2: PRUEBA INTERACTIVA CACHE-FIRST -->
+      <section class="card col-6" id="sec-cache-first-tester">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            2. Probador de Estrategia Cache-First
+          </h2>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Solicita recursos del App Shell u otros datos para verificar si la respuesta proviene de la <strong>Caché (⚡ Hit)</strong> o de la <strong>Red (🌐 Miss)</strong>.
+        </p>
+        
+        <div class="test-grid">
+          <button class="btn btn-secondary btn-sm test-fetch-btn" data-url="styles.css">
+            📄 styles.css
+          </button>
+          <button class="btn btn-secondary btn-sm test-fetch-btn" data-url="app.js">
+            📜 app.js
+          </button>
+          <button class="btn btn-secondary btn-sm test-fetch-btn" data-url="images/app_shell_banner.jpg">
+            🖼️ Banner Image
+          </button>
+          <button class="btn btn-secondary btn-sm test-fetch-btn" data-url="manifest.json">
+            📋 manifest.json
+          </button>
+          <button class="btn btn-secondary btn-sm test-fetch-btn" data-url="https://jsonplaceholder.typicode.com/todos/1" data-dynamic="true">
+            🌐 API Externa (No Precachada)
+          </button>
+        </div>
+
+        <div class="tester-box" id="testResultContainer">
+          <div style="color: var(--text-dim); text-align: center; font-size: 0.88rem; padding: 0.5rem;">
+            Haz clic en cualquiera de los botones superiores para ejecutar la solicitud.
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 3: INSPECTOR DE LA CACHE API -->
+      <section class="card col-12" id="sec-cache-inspector">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+            </svg>
+            3. Inspector de Recursos en la Cache API (`app-shell-v1`)
+          </h2>
+          <button id="btnRefreshCacheTable" class="btn btn-secondary btn-sm">
+            🔄 Actualizar Tabla
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="cache-table">
+            <thead>
+              <tr>
+                <th>Recurso / URL</th>
+                <th>Estado HTTP</th>
+                <th>Tipo de Contenido</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="cacheTableBody">
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-dim);">Cargando contenido de la caché...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CARD 4: EVENT LOG CONSOLE IN REAL TIME -->
+      <section class="card col-6" id="sec-console">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            4. Monitor de Eventos en Tiempo Real
+          </h2>
+          <button id="btnClearConsole" class="btn btn-secondary btn-sm">Limpiar</button>
+        </div>
+        <div class="console-box" id="consoleOutput">
+          <div class="log-entry">
+            <span class="log-time">[System]</span>
+            <span class="log-info">Iniciando monitor de eventos de Cache API...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARD 5: FLUJO DE TRABAJO Y CÓDIGO EXPLICATIVO -->
+      <section class="card col-6" id="sec-explanation">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            5. Explicación Téorica del Ejercicio 4
+          </h2>
+        </div>
+
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Evento <code>install</code> y <code>caches.open()</code></h4>
+              <p>Durante la instalación del Service Worker, se ejecuta <code>caches.open('app-shell-v1')</code> para abrir o crear una bóveda de almacenamiento estático.</p>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Almacenamiento del App Shell con <code>cache.addAll()</code></h4>
+              <p>Se guardan de forma atómica los archivos estáticos indispensables (HTML, CSS, JS e imágenes base) en la memoria caché.</p>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h4>Intercepción <code>fetch</code> & Estrategia Cache-First</h4>
+              <p>Al realizar peticiones, <code>caches.match(event.request)</code> busca el recurso. Si existe, se entrega al instante sin hacer uso de la red.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CODE SHOWCASE SECTION -->
+      <section class="card col-12" id="sec-code-view">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+            Código Fuente del Service Worker (`sw.js`)
+          </h2>
+        </div>
+        <div class="code-container">
+<span class="code-comment">// 1. Nombre de la memoria caché y lista del App Shell</span>
+<span class="code-keyword">const</span> <span class="code-const">CACHE_NAME</span> = <span class="code-string">'app-shell-v1'</span>;
+<span class="code-keyword">const</span> <span class="code-const">APP_SHELL_ASSETS</span> = [
+  <span class="code-string">'./'</span>, <span class="code-string">'./index.html'</span>, <span class="code-string">'./styles.css'</span>, <span class="code-string">'./app.js'</span>,
+  <span class="code-string">'./manifest.json'</span>, <span class="code-string">'./images/app_shell_banner.jpg'</span>
+];
+
+<span class="code-comment">// 2. Evento Install: Crear caché y guardar App Shell</span>
+self.<span class="code-func">addEventListener</span>(<span class="code-string">'install'</span>, (event) => {
+  event.<span class="code-func">waitUntil</span>(
+    caches.<span class="code-func">open</span>(<span class="code-const">CACHE_NAME</span>).<span class="code-func">then</span>((cache) => {
+      <span class="code-keyword">return</span> cache.<span class="code-func">addAll</span>(<span class="code-const">APP_SHELL_ASSETS</span>);
+    })
+  );
+});
+
+<span class="code-comment">// 3. Evento Fetch: Interceptar con Estrategia Cache-First</span>
+self.<span class="code-func">addEventListener</span>(<span class="code-string">'fetch'</span>, (event) => {
+  event.<span class="code-func">respondWith</span>(
+    caches.<span class="code-func">match</span>(event.request).<span class="code-func">then</span>((cachedResponse) => {
+      <span class="code-comment">// Si está en la Cache API, devolver respuesta precachada</span>
+      <span class="code-keyword">if</span> (cachedResponse) {
+        <span class="code-keyword">return</span> cachedResponse;
+      }
+      <span class="code-comment">// Si no está en caché, consultar a la Red</span>
+      <span class="code-keyword">return</span> <span class="code-func">fetch</span>(event.request);
+    })
+  );
+});
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>Ejercicio 4 — Desarrollo de PWA | Cache API y Estrategia Cache-First</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
