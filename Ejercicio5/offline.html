@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modo Sin Conexión - Ejercicio 5</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --rose: #f43f5e;
+      --emerald: #10b981;
+      --indigo: #6366f1;
+      --cyan: #06b6d4;
+      --amber: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background-image: 
+        radial-gradient(circle at 50% 20%, rgba(244, 63, 94, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+    }
+
+    .offline-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .offline-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--rose), var(--amber), var(--indigo));
+    }
+
+    .icon-container {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      animation: pulseAlert 2.5s infinite;
+    }
+
+    .icon-container svg {
+      width: 40px;
+      height: 40px;
+      color: var(--rose);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #fda4af;
+    }
+
+    .status-pill.online-now {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+
+    .offline-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    .offline-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }
+
+    .technical-details {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      text-align: left;
+      font-size: 0.82rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .technical-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--indigo);
+      outline: none;
+      user-select: none;
+    }
+
+    .technical-details p {
+      margin-top: 8px;
+      color: var(--text-muted);
+    }
+
+    .technical-details code {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--cyan);
+      font-family: monospace;
+    }
+
+    .actions-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--indigo), #4f46e5);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Interactive Game while offline */
+    .mini-game-section {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .mini-game-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 240px;
+      margin: 0 auto;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .cell:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    @keyframes pulseAlert {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="offline-card">
+    <div class="icon-container">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 4.243a9 9 0 010-12.728M5.636 5.636L3 3m2.636 2.636l2.829 2.829m0 0a5 5 0 017.072 0m-7.072 0L3 3"></path>
+      </svg>
+    </div>
+
+    <div class="status-pill" id="offlinePill">
+      <span>● Sin conexión a Internet</span>
+    </div>
+
+    <h1 class="offline-title">Modo Sin Conexión</h1>
+    <p class="offline-desc">
+      El Service Worker ha interceptado tu petición (evento <code>fetch</code>). Debido a que no hay conexión de red activa y este recurso no fue guardado previamente en la memoria caché, te estamos mostrando esta vista de respaldo (Fallback HTML).
+    </p>
+
+    <details class="technical-details">
+      <summary>🔍 ¿Qué sucedió técnicamente?</summary>
+      <p>
+        1. El navegador envió una solicitud HTTP para una página web.<br>
+        2. El <code>sw.js</code> interceptó la petición en <code>addEventListener('fetch', ...)</code>.<br>
+        3. Se intentó obtener el recurso desde la red mediante <code>fetch(event.request)</code>.<br>
+        4. La solicitud falló por falta de conexión.<br>
+        5. El Service Worker buscó en la caché (<code>caches.match</code>), pero el recurso no estaba almacenado.<br>
+        6. Se activó el mecanismo de respuesta alternativa respondiendo con la plantilla <code>offline.html</code>.
+      </p>
+    </details>
+
+    <div class="actions-group">
+      <button class="btn btn-primary" onclick="window.location.reload()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Reintentar Conexión
+      </button>
+      <button class="btn btn-secondary" onclick="history.back()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Volver Atrás
+      </button>
+    </div>
+
+    <div class="mini-game-section">
+      <div class="mini-game-title">🎮 Mientras vuelve la red: Tres en Raya Offline</div>
+      <div class="game-grid" id="gameGrid">
+        <div class="cell" onclick="makeMove(this, 0)"></div>
+        <div class="cell" onclick="makeMove(this, 1)"></div>
+        <div class="cell" onclick="makeMove(this, 2)"></div>
+        <div class="cell" onclick="makeMove(this, 3)"></div>
+        <div class="cell" onclick="makeMove(this, 4)"></div>
+        <div class="cell" onclick="makeMove(this, 5)"></div>
+        <div class="cell" onclick="makeMove(this, 6)"></div>
+        <div class="cell" onclick="makeMove(this, 7)"></div>
+        <div class="cell" onclick="makeMove(this, 8)"></div>
+      </div>
+      <p id="gameStatus" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">Turno del Jugador (X)</p>
+    </div>
+
+  </div>
+
+  <script>
+    // Monitor online/offline events inside the offline fallback view
+    function updateStatus() {
+      const pill = document.getElementById('offlinePill');
+      if (navigator.onLine) {
+        pill.className = 'status-pill online-now';
+        pill.innerHTML = '<span>● ¡Conexión Restablecida! Haz clic en Reintentar</span>';
+      } else {
+        pill.className = 'status-pill';
+        pill.innerHTML = '<span>● Sin conexión a Internet</span>';
+      }
+    }
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus();
+
+    // Simple Offline Tic-Tac-Toe Game
+    let turn = 'X';
+    let board = Array(9).fill(null);
+    let gameActive = true;
+
+    function makeMove(cell, index) {
+      if (!gameActive || board[index]) return;
+      board[index] = turn;
+      cell.textContent = turn;
+      cell.style.color = turn === 'X' ? '#6366f1' : '#f43f5e';
+      
+      if (checkWin()) {
+        document.getElementById('gameStatus').textContent = `🎉 ¡Jugador ${turn} ha ganado!`;
+        gameActive = false;
+        return;
+      }
+      
+      if (board.every(cell => cell !== null)) {
+        document.getElementById('gameStatus').textContent = '🤝 Empate';
+        gameActive = false;
+        return;
+      }
+
+      turn = turn === 'X' ? 'O' : 'X';
+      document.getElementById('gameStatus').textContent = `Turno del Jugador (${turn})`;
+
+      // Simple Bot response for 'O'
+      if (turn === 'O' && gameActive) {
+        setTimeout(botMove, 400);
+      }
+    }
+
+    function botMove() {
+      const emptyIndices = board.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
+      if (emptyIndices.length === 0) return;
+      const randomIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      const cells = document.querySelectorAll('.cell');
+      makeMove(cells[randomIdx], randomIdx);
+    }
+
+    function checkWin() {
+      const wins = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      return wins.some(w => board[w[0]] && board[w[0]] === board[w[1]] && board[w[0]] === board[w[2]]);
+    }
+  </script>
+</body>
+</html>

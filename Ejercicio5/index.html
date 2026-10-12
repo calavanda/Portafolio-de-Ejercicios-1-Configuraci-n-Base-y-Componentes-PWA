@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6366f1">
+  <title>Ejercicio 5: Interceptor de Peticiones y Estado Offline</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="manifest" href="./manifest.json">
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>Ejercicio 5: Interceptor y Respuestas Offline</h1>
+          <p>Service Worker Fetch Event & Fallback HTML Template</p>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <div class="sw-badge" id="swStatus">
+          <span>⚙️ SW Verificando...</span>
+        </div>
+        <div class="status-badge online" id="networkBadge">
+          <span class="dot"></span>
+          <span>En línea</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-layout">
+
+    <!-- Hero Concept Card -->
+    <section class="hero-card">
+      <h2 class="hero-title">Interceptor de Peticiones y Manejo de Estado Offline</h2>
+      <p class="hero-desc">
+        Esta aplicación demuestra la interceptación de peticiones HTTP en el Service Worker mediante el evento <code>fetch</code>. 
+        Al detectar la pérdida de conexión a internet o un error de red, si el recurso solicitado no existe en la <strong>Cache API</strong>, 
+        el Service Worker programa y entrega automáticamente una <strong>respuesta alternativa (fallback)</strong> renderizando la plantilla HTML personalizada de <em>"Modo Sin Conexión"</em>.
+      </p>
+
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Evento Fetch</div>
+          <div class="feature-text">Intercepción transparente de todas las peticiones salientes HTTP/HTTPS.</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">🌐</div>
+          <div class="feature-title">Detección de Pérdida de Red</div>
+          <div class="feature-text">Detección automática del fallo de red (Network Error / Offline).</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">📄</div>
+          <div class="feature-title">HTML Fallback Template</div>
+          <div class="feature-text">Renderizado dinámico de <code>offline.html</code> con minijuego e información técnica.</div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">💾</div>
+          <div class="feature-title">Cache Strategy</div>
+          <div class="feature-text">Intento primario en Red/Caché y degradación progresiva limpia.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lab Controls & Realtime Console Grid -->
+    <div class="grid-two-col">
+
+      <!-- Panel 1: Laboratory Control Panel -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3 class="panel-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            Panel de Pruebas e Intercepción
+          </h3>
+        </div>
+
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Haz clic en los siguientes botones para simular peticiones a distintos tipos de recursos y observar cómo reacciona el Service Worker:
+        </p>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnFetchNavFallback">
+            <span>📄 Navegar a URL Inexistente (Activa Offline HTML)</span>
+          </button>
+          
+          <button class="btn btn-cyan" id="btnFetchCached">
+            <span>💾 Solicitar Recurso en Caché (styles.css)</span>
+          </button>
+
+          <button class="btn btn-secondary" id="btnFetchImageFallback">
+            <span>🖼️ Solicitar Imagen No Almacenada (Fallback SVG)</span>
+          </button>
+
+          <button class="btn btn-emerald" id="btnFetchApiFallback">
+            <span>🔌 Solicitar API JSON (Fallback JSON)</span>
+          </button>
+        </div>
+
+        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">
+            Gestión de Memoria Caché:
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" id="btnPrecache">
+              <span>📥 Precargar Shell Assets</span>
+            </button>
+            <button class="btn btn-rose" id="btnClearCache">
+              <span>🗑️ Vaciar Cache API</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Live Log Terminal -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3 class="panel-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Consola del Interceptor en Tiempo Real
+          </h3>
+          <button class="btn btn-secondary" id="btnClearConsole" style="padding: 4px 10px; font-size: 0.75rem;">Limpiar</button>
+        </div>
+
+        <div class="terminal-box" id="terminalBox">
+          <!-- Live logs injected here -->
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Visual Sandbox Preview Frame -->
+    <section class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          Vista Previa del Renderizador de Respuestas (Iframe Sandbox)
+        </h3>
+        <button class="btn btn-secondary" id="btnReloadFrame" style="padding: 4px 10px; font-size: 0.75rem;">🔄 Recargar Iframe</button>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Este contenedor muestra en vivo exactamente lo que el navegador renderiza tras la intercepción del Service Worker.
+      </p>
+
+      <div class="sandbox-wrapper">
+        <iframe id="sandboxFrame" class="sandbox-frame" src="./offline.html"></iframe>
+      </div>
+    </section>
+
+    <!-- Cache Inspector Table & DevTools Guide Grid -->
+    <div class="grid-two-col">
+
+      <!-- Cache Storage Table -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3 class="panel-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21 3.582 4 8 4s8-1.79 8-4"></path></svg>
+            Inspección de Almacenamiento Caché (<span id="cacheItemCount" style="color:var(--accent-cyan)">0 recursos</span>)
+          </h3>
+        </div>
+
+        <div class="cache-table-wrapper">
+          <table class="cache-table">
+            <thead>
+              <tr>
+                <th>Cache Storage</th>
+                <th>Recurso / Path</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="cacheTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DevTools Instruction Guide -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <h3 class="panel-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            ¿Cómo Simular la Pérdida de Conexión?
+          </h3>
+        </div>
+
+        <div class="sim-box">
+          <div class="sim-title">1. Usando Chrome / Edge / Firefox DevTools:</div>
+          <div class="sim-desc">
+            Presiona <code>F12</code> o <code>Ctrl + Shift + I</code>, ve a la pestaña <strong>Network (Red)</strong> o <strong>Application > Service Workers</strong>, y marca la casilla <strong>Offline (Sin conexión)</strong>.
+          </div>
+        </div>
+
+        <div class="sim-box">
+          <div class="sim-title">2. Probar la Intercepción Fallback:</div>
+          <div class="sim-desc">
+            Una vez estando en <em>Offline</em>, haz clic en el botón <strong>"Navegar a URL Inexistente"</strong> o intenta refrescar la página. El Service Worker devolverá la plantilla <code>offline.html</code> personalizada.
+          </div>
+        </div>
+
+        <div class="sim-box">
+          <div class="sim-title">3. Estado de Red Actual:</div>
+          <div class="sim-desc" style="font-weight: 600; color: var(--accent-cyan);" id="simNetworkStatus">
+            Cargando estado...
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Ejercicio 5: Interceptor de Peticiones y Manejo de Estado Offline • Desarrollo Web con PWA & Service Workers</p>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
