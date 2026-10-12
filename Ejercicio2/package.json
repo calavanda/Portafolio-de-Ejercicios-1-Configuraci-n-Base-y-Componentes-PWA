@@ -1,0 +1,13 @@
+{
+  "name": "pwa-appshell-splash-screen",
+  "version": "1.0.0",
+  "description": "Maquetado del App Shell y Splash Screen nativa con diseño responsivo y verificación en Chrome DevTools",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "generate-icons": "node generate_icons.js"
+  },
+  "keywords": ["pwa", "app-shell", "splash-screen", "service-worker", "chrome-devtools"],
+  "author": "",
+  "license": "MIT"
+}
