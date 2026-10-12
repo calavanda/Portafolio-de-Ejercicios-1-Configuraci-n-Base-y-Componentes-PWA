@@ -1,0 +1,19 @@
+{
+  "name": "ejercicio3-pwa-service-worker-indexeddb",
+  "version": "1.0.0",
+  "description": "PWA con Service Worker, estrategias de cache estaticas y dinamicas, y persistencia asincrona IndexedDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "pwa",
+    "service-worker",
+    "indexeddb",
+    "cache-api",
+    "offline-first"
+  ],
+  "author": "",
+  "license": "MIT"
+}

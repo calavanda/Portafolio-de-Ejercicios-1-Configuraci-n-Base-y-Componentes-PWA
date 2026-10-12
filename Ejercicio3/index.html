@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Studio | Service Worker & IndexedDB Offline</title>
+  <meta name="description" content="Demostración avanzada de Service Worker, estrategias de caché para recursos estáticos y dinámicos, y persistencia asíncrona con IndexedDB en modo offline.">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  
+  <!-- Tipografía moderna -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <!-- Banner de actualización de Service Worker -->
+  <div id="sw-update-banner" class="sw-update-banner hidden">
+    <div class="banner-content">
+      <span class="banner-icon">🚀</span>
+      <span>¡Nueva versión disponible del Service Worker!</span>
+      <button id="btn-sw-update-now" class="btn btn-sm btn-primary">Actualizar y Recargar</button>
+    </div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Barra Superior / Header -->
+    <header class="app-header">
+      <div class="header-branding">
+        <div class="logo-wrapper">
+          <img src="./icons/icon.svg" alt="PWA Studio Logo" class="app-logo">
+        </div>
+        <div>
+          <h1 class="app-title">PWA Offline Studio</h1>
+          <p class="app-subtitle">Service Worker • Estrategias de Caché • Persistencia IndexedDB</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="status-group">
+          <span id="connection-badge" class="status-pill badge-success">En Línea</span>
+          <span id="sw-badge" class="status-pill badge-neutral">SW: Verificando...</span>
+        </div>
+        <button id="btn-toggle-offline" class="btn btn-outline" title="Simula pérdida o restauración de conexión">
+          Simular Corte de Red (Offline)
+        </button>
+      </div>
+    </header>
+
+    <!-- Banner dinámico de estado de red -->
+    <div id="network-banner" class="network-banner banner-online">
+      <div class="banner-inner">
+        <span class="pulsing-dot"></span>
+        <span id="network-banner-text">🟢 Conexión a Internet activa. Todos los datos sincronizados.</span>
+      </div>
+    </div>
+
+    <!-- Navegación por pestañas -->
+    <nav class="nav-tabs" aria-label="Secciones de la aplicación">
+      <button class="tab-nav-btn active" data-tab="items" id="tab-btn-items">
+        <span class="tab-icon">💾</span> Persistencia IndexedDB
+      </button>
+      <button class="tab-nav-btn" data-tab="cache" id="tab-btn-cache">
+        <span class="tab-icon">⚡</span> Estrategias de Caché
+      </button>
+      <button class="tab-nav-btn" data-tab="terminal" id="tab-btn-terminal">
+        <span class="tab-icon">🖥️</span> Consola de Eventos
+      </button>
+    </nav>
+
+    <!-- Métricas principales / Resumen del almacenamiento -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Total en IndexedDB</span>
+        <span class="stat-value" id="stat-total">0</span>
+        <span class="stat-caption">Registros guardados</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Sincronizados</span>
+        <span class="stat-value text-success" id="stat-synced">0</span>
+        <span class="stat-caption">En servidor / local</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Pendientes Offline</span>
+        <span class="stat-value text-warning" id="stat-pending">0</span>
+        <span class="stat-caption">Esperando reconexión</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Almacenamiento Local</span>
+        <span class="stat-value text-accent" id="stat-storage">0 KB</span>
+        <span class="stat-caption">IndexedDB & Cache API</span>
+      </div>
+    </section>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      <!-- PANEL 1: PERSISTENCIA ASÍNCRONA INDEXEDDB -->
+      <section id="panel-items" class="tab-panel active">
+        <div class="panel-two-column">
+          <!-- Columna Formulario -->
+          <div class="card glass-card form-section">
+            <div class="card-header">
+              <h2 class="card-title">📝 Registrar Dato en Modo Offline / Online</h2>
+              <p class="card-subtitle">Se guarda de inmediato en IndexedDB sin bloquear el hilo principal.</p>
+            </div>
+            
+            <form id="form-new-item" class="data-form">
+              <div class="form-group">
+                <label for="item-title">Título o Nombre del Registro</label>
+                <input type="text" id="item-title" required placeholder="Ej: Reporte de inspección en campo" autocomplete="off">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="item-category">Categoría</label>
+                  <select id="item-category">
+                    <option value="Operaciones">Operaciones</option>
+                    <option value="Ventas">Ventas</option>
+                    <option value="Desarrollo">Desarrollo</option>
+                    <option value="Inventario">Inventario</option>
+                    <option value="Soporte">Soporte</option>
+                  </select>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="item-priority">Prioridad</label>
+                  <select id="item-priority">
+                    <option value="low">Baja</option>
+                    <option value="medium" selected>Media</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="item-desc">Detalles / Notas Adicionales</label>
+                <textarea id="item-desc" rows="3" placeholder="Información capturada incluso sin internet..."></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btn-save-item">
+                  <span>💾</span> Guardar en IndexedDB
+                </button>
+              </div>
+            </form>
+
+            <div class="quick-tools">
+              <span class="tools-title">Herramientas Rápidas:</span>
+              <div class="btn-group">
+                <button id="btn-seed-data" class="btn btn-sm btn-ghost">🌱 Cargar Datos Demo</button>
+                <button id="btn-manual-sync" class="btn btn-sm btn-ghost">🔄 Forzar Sincronización</button>
+                <button id="btn-clear-data" class="btn btn-sm btn-ghost text-danger">🗑️ Vaciar BD</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Lista de Registros -->
+          <div class="card glass-card list-section">
+            <div class="card-header flex-between">
+              <div>
+                <h2 class="card-title">📦 Registros Almacenados Localmente</h2>
+                <p class="card-subtitle">Consultados de forma asíncrona mediante IndexedDB API</p>
+              </div>
+              <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="synced">Sincronizados</button>
+                <button class="filter-btn" data-filter="pending">Pendientes</button>
+              </div>
+            </div>
+
+            <!-- Contenedor dinámico de elementos -->
+            <div id="items-container" class="items-list">
+              <!-- Elementos generados dinámicamente -->
+            </div>
+
+            <!-- Estado vacío -->
+            <div id="empty-state" class="empty-state">
+              <div class="empty-icon">📂</div>
+              <h3>No hay registros en IndexedDB</h3>
+              <p>Agrega un nuevo registro arriba o utiliza el botón "Cargar Datos Demo".</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 2: ESTRATEGIAS DE CACHÉ (SERVICE WORKER) -->
+      <section id="panel-cache" class="tab-panel">
+        <div class="strategies-grid">
+          <!-- Explicación de Estrategias -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h2 class="card-title">🛡️ Estrategias de Caché Implementadas</h2>
+              <p class="card-subtitle">Diseño desacoplado según la naturaleza del recurso</p>
+            </div>
+
+            <div class="strategy-cards-list">
+              <div class="strategy-info-item">
+                <div class="strategy-badge bg-purple">Cache-First</div>
+                <div>
+                  <h4>Recursos Estáticos & App Shell (HTML, CSS, JS, Fuentes, SVG)</h4>
+                  <p>Busca inmediatamente en <code>Cache Storage</code>. Si está presente, responde al instante (&lt; 15ms) permitiendo la carga instantánea y offline sin depender de la red.</p>
+                </div>
+              </div>
+
+              <div class="strategy-info-item">
+                <div class="strategy-badge bg-blue">Network-First</div>
+                <div>
+                  <h4>APIs y Datos Dinámicos (/api/* y endpoints REST)</h4>
+                  <p>Prioriza la respuesta más fresca desde la red. Si el usuario está offline o la red falla, recurre a la versión almacenada en caché o a una respuesta JSON de contingencia.</p>
+                </div>
+              </div>
+
+              <div class="strategy-info-item">
+                <div class="strategy-badge bg-emerald">Clean Activation</div>
+                <div>
+                  <h4>Gestión y Limpieza Limpia de Caché</h4>
+                  <p>En el evento <code>activate</code>, compara con <code>CACHE_ALLOWLIST</code> y elimina automáticamente versiones obsoletas (<code>caches.delete()</code>), luego toma el control con <code>clients.claim()</code>.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="test-bench">
+              <h3>🧪 Banco de Pruebas de Estrategias</h3>
+              <div class="test-actions">
+                <button id="btn-test-static" class="btn btn-outline">
+                  ⚡ Probar Cache-First (styles.css)
+                </button>
+                <button id="btn-test-dynamic" class="btn btn-primary">
+                  🌐 Probar Network-First (API Dinámica)
+                </button>
+              </div>
+              <div id="api-test-result" class="api-result">
+                <span>Haz clic en uno de los botones para ejecutar la prueba y evaluar el comportamiento.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inspector de Cache Storage -->
+          <div class="card glass-card">
+            <div class="card-header flex-between">
+              <div>
+                <h2 class="card-title">🗄️ Inspector de Cache Storage</h2>
+                <p class="card-subtitle">Cachés versionadas activas en el navegador</p>
+              </div>
+              <div class="btn-group">
+                <button id="btn-refresh-caches" class="btn btn-sm btn-ghost">Actualizar</button>
+                <button id="btn-clear-caches" class="btn btn-sm btn-ghost text-danger">Limpiar Cachés</button>
+              </div>
+            </div>
+
+            <div id="cache-inspector-list" class="cache-list">
+              <!-- Elementos de caché inspeccionados -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 3: CONSOLA DE EVENTOS EN TIEMPO REAL -->
+      <section id="panel-terminal" class="tab-panel">
+        <div class="card glass-card terminal-card">
+          <div class="card-header flex-between">
+            <div>
+              <h2 class="card-title">🖥️ Monitor de Ciclo de Vida y Eventos en Tiempo Real</h2>
+              <p class="card-subtitle">Registro cronológico de Service Worker, Cache API e IndexedDB</p>
+            </div>
+            <button id="btn-clear-log" class="btn btn-sm btn-ghost">Limpiar Consola</button>
+          </div>
+
+          <div id="terminal-log" class="terminal-body">
+            <!-- Salida de log en vivo -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>PWA Offline Studio • Demostración técnica de Service Worker, Cache API y persistencia IndexedDB asíncrona.</p>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
